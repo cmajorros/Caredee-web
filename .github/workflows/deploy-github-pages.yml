@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CUSTOM_DOMAIN: caredeeco.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,7 +35,10 @@ jobs:
           repo="${GITHUB_REPOSITORY#*/}"
           owner="${GITHUB_REPOSITORY_OWNER}"
           echo "GITHUB_PAGES=true" >> "$GITHUB_ENV"
-          if [ "$repo" = "$owner.github.io" ]; then
+          if [ -n "$CUSTOM_DOMAIN" ]; then
+            echo "NEXT_PUBLIC_BASE_PATH=" >> "$GITHUB_ENV"
+            echo "NEXT_PUBLIC_SITE_URL=https://$CUSTOM_DOMAIN" >> "$GITHUB_ENV"
+          elif [ "$repo" = "$owner.github.io" ]; then
             echo "NEXT_PUBLIC_BASE_PATH=" >> "$GITHUB_ENV"
             echo "NEXT_PUBLIC_SITE_URL=https://$owner.github.io" >> "$GITHUB_ENV"
           else
@@ -49,6 +54,9 @@ jobs:
 
       - name: Disable Jekyll processing
         run: touch out/.nojekyll
+
+      - name: Preserve custom domain
+        run: echo "$CUSTOM_DOMAIN" > out/CNAME
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
