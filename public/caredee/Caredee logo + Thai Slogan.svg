@@ -1,0 +1,49 @@
+<svg width="1100" height="360" viewBox="0 0 360 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .loop {
+        fill: none;
+        stroke: #1F7A6C;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .node {
+        fill: #2CA6A4;
+      }
+      .brand-en {
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 36px;
+        font-weight: 500;
+        fill: #2E2E2E;
+        letter-spacing: 0.5px;
+      }
+      .slogan-th {
+        font-family: 'Prompt', 'Kanit', sans-serif;
+        font-size: 16px;
+        fill: #6B6B6B;
+      }
+    </style>
+  </defs>
+
+  <!-- ICON -->
+  <g transform="translate(10,20) scale(0.85)">
+    <path class="loop" d="
+        M 30 50
+        A 20 20 0 1 1 50 30
+        A 20 20 0 1 1 70 50
+        A 22 22 0 1 1 30 50
+      "></path>
+    <circle class="node" cx="68" cy="42" r="2.5"></circle>
+    <circle class="node" cx="50" cy="70" r="2.5"></circle>
+  </g>
+
+  <!-- BRAND NAME -->
+  <text x="110" y="55" class="brand-en">Caredee</text>
+
+  <!-- SLOGAN (THAI) -->
+  <text x="110" y="82" class="slogan-th">
+    แคร์ดี เพราะการดูแลที่ดี เริ่มจากระบบที่ฉลาด
+  </text>
+
+</svg>

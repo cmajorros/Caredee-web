@@ -1,0 +1,38 @@
+<svg width="900" height="300" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .loop {
+        fill: none;
+        stroke: #1F7A6C;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .node {
+        fill: #2CA6A4;
+      }
+      .wordmark {
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 36px;
+        fill: #2E2E2E;
+        letter-spacing: 0.5px;
+      }
+    </style>
+  </defs>
+
+  <!-- ICON -->
+  <g transform="translate(10,10) scale(0.8)">
+    <path class="loop" d="
+        M 30 50
+        A 20 20 0 1 1 50 30
+        A 20 20 0 1 1 70 50
+        A 22 22 0 1 1 30 50
+      "></path>
+    <circle class="node" cx="68" cy="42" r="2.5"></circle>
+    <circle class="node" cx="50" cy="70" r="2.5"></circle>
+  </g>
+
+  <!-- WORDMARK -->
+  <text x="110" y="58" class="wordmark">Caredee</text>
+
+</svg>

@@ -1,0 +1,46 @@
+<svg width="1000" height="320" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .loop {
+        fill: none;
+        stroke: #1F7A6C;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .node {
+        fill: #2CA6A4;
+      }
+      .brand-en {
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 34px;
+        fill: #2E2E2E;
+        letter-spacing: 0.5px;
+      }
+      .brand-th {
+        font-family: 'Prompt', 'Kanit', sans-serif;
+        font-size: 20px;
+        fill: #6B6B6B;
+      }
+    </style>
+  </defs>
+
+  <!-- ICON -->
+  <g transform="translate(10,10) scale(0.8)">
+    <path class="loop" d="
+        M 30 50
+        A 20 20 0 1 1 50 30
+        A 20 20 0 1 1 70 50
+        A 22 22 0 1 1 30 50
+      "></path>
+    <circle class="node" cx="68" cy="42" r="2.5"></circle>
+    <circle class="node" cx="50" cy="70" r="2.5"></circle>
+  </g>
+
+  <!-- WORDMARK EN -->
+  <text x="110" y="52" class="brand-en">Caredee</text>
+
+  <!-- WORDMARK TH -->
+  <text x="110" y="75" class="brand-th">แคร์ดี</text>
+
+</svg>
