@@ -385,22 +385,10 @@ const contactLinks = [
   },
 ];
 
-const vCardValue = [
-  "BEGIN:VCARD",
-  "VERSION:3.0",
-  "N:Roongdonsai;Siroros;;;",
-  "FN:Siroros Roongdonsai",
-  "NICKNAME:สิโรรส รุ่งดอนทราย",
-  "ORG:Caredee",
-  "TITLE:Caredee product owner",
-  "EMAIL:ros.cmajor@gmail.com",
-  "TEL;TYPE=CELL:+66879182825",
-  "URL:https://www.linkedin.com/in/siroros-roongdonsai/",
-  "END:VCARD",
-].join("\r\n");
-
 const linkedInValue = "https://www.linkedin.com/in/siroros-roongdonsai/";
-const contactVcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vCardValue)}`;
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://caredeeco.com").replace(/\/$/, "");
+const contactVcardPath = "/Siroros-Roongdonsai-Caredee.vcf";
+const contactVcardUrl = `${siteUrl}${contactVcardPath}`;
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
@@ -604,9 +592,9 @@ export default function Home() {
           <div className="qr-panel" aria-label="QR codes">
             <article>
               <QrCode
-                value={vCardValue}
+                value={contactVcardUrl}
                 label={t.contactQr}
-                href={contactVcardHref}
+                href={assetPath(contactVcardPath)}
                 download="Siroros-Roongdonsai-Caredee.vcf"
               />
               <h3>{t.contactQr}</h3>
