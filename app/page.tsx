@@ -1,7 +1,8 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
 type Language = "en" | "th";
 
@@ -396,9 +397,10 @@ const vCardValue = [
   "TEL;TYPE=CELL:+66879182825",
   "URL:https://www.linkedin.com/in/siroros-roongdonsai/",
   "END:VCARD",
-].join("\n");
+].join("\r\n");
 
 const linkedInValue = "https://www.linkedin.com/in/siroros-roongdonsai/";
+const contactVcardHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vCardValue)}`;
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
@@ -576,14 +578,20 @@ export default function Home() {
             <p className="eyebrow">{language === "en" ? "Contact" : "ติดต่อ"}</p>
             <h2>{t.contactTitle}</h2>
             <p>{t.contactBody}</p>
-            <div className="contact-card">
+            <a
+              className="contact-card"
+              href={linkedInValue}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open Siroros Roongdonsai LinkedIn profile"
+            >
               <img src={assetPath("/brand/caredee-logo-icon.png")} alt="" />
               <div>
                 <h3>{t.contactName}</h3>
                 <p>{t.contactThaiName}</p>
                 <span>{t.contactRole}</span>
               </div>
-            </div>
+            </a>
             <div className="contact-links">
               {contactLinks.map((link) => (
                 <a href={link.href} key={link.label} target="_blank" rel="noreferrer">
@@ -595,11 +603,16 @@ export default function Home() {
           </div>
           <div className="qr-panel" aria-label="QR codes">
             <article>
-              <QrCode value={vCardValue} label={t.contactQr} />
+              <QrCode
+                value={vCardValue}
+                label={t.contactQr}
+                href={contactVcardHref}
+                download="Siroros-Roongdonsai-Caredee.vcf"
+              />
               <h3>{t.contactQr}</h3>
             </article>
             <article>
-              <QrCode value={linkedInValue} label={t.profileQr} />
+              <QrCode value={linkedInValue} label={t.profileQr} href={linkedInValue} />
               <h3>{t.profileQr}</h3>
             </article>
           </div>
@@ -740,441 +753,38 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
-function QrCode({ value, label }: { value: string; label: string }) {
-  const matrix = useMemo(() => createQrMatrix(value), [value]);
-  const quietZone = 4;
-  const size = matrix.length + quietZone * 2;
-  const path = useMemo(() => {
-    const segments: string[] = [];
-    matrix.forEach((row, y) => {
-      row.forEach((dark, x) => {
-        if (dark) {
-          segments.push(`M${x + quietZone} ${y + quietZone}h1v1h-1z`);
-        }
-      });
-    });
-    return segments.join("");
-  }, [matrix]);
+function QrCode({
+  value,
+  label,
+  href,
+  download,
+}: {
+  value: string;
+  label: string;
+  href: string;
+  download?: string;
+}) {
+  const opensNewTab = href.startsWith("http");
 
   return (
-    <svg
-      className="qr-code"
-      role="img"
+    <a
+      className="qr-link"
+      href={href}
+      download={download}
+      target={opensNewTab ? "_blank" : undefined}
+      rel={opensNewTab ? "noreferrer" : undefined}
       aria-label={label}
-      viewBox={`0 0 ${size} ${size}`}
-      shapeRendering="crispEdges"
     >
-      <rect width={size} height={size} fill="#FFFFFF" />
-      <path d={path} fill="#1F7A6C" />
-    </svg>
+      <QRCodeSVG
+        className="qr-code"
+        value={value}
+        title={label}
+        size={220}
+        level="M"
+        marginSize={4}
+        bgColor="#FFFFFF"
+        fgColor="#1F7A6C"
+      />
+    </a>
   );
-}
-
-const QR_VERSION = 15;
-const QR_SIZE = 21 + (QR_VERSION - 1) * 4;
-const QR_DATA_CODEWORDS = 523;
-const QR_ECC_CODEWORDS_PER_BLOCK = 22;
-const QR_BLOCKS = 6;
-const QR_ALIGNMENT_POSITIONS = [6, 26, 48, 70];
-
-function createQrMatrix(value: string): boolean[][] {
-  const codewords = createCodewords(value);
-  const bits = codewords.flatMap((codeword) =>
-    Array.from({ length: 8 }, (_, index) => ((codeword >>> (7 - index)) & 1) === 1),
-  );
-
-  let bestMatrix: boolean[][] | null = null;
-  let bestPenalty = Number.POSITIVE_INFINITY;
-
-  for (let mask = 0; mask < 8; mask += 1) {
-    const { matrix, isFunction } = createBaseMatrix(mask);
-    drawData(matrix, isFunction, bits, mask);
-    const penalty = calculatePenalty(matrix);
-
-    if (penalty < bestPenalty) {
-      bestPenalty = penalty;
-      bestMatrix = matrix;
-    }
-  }
-
-  return bestMatrix ?? createBaseMatrix(0).matrix;
-}
-
-function createCodewords(value: string): number[] {
-  const bytes = Array.from(new TextEncoder().encode(value));
-  const dataBits: number[] = [];
-
-  appendBits(dataBits, 0b0100, 4);
-  appendBits(dataBits, bytes.length, 16);
-  bytes.forEach((byte) => appendBits(dataBits, byte, 8));
-
-  const capacityBits = QR_DATA_CODEWORDS * 8;
-  const terminator = Math.min(4, capacityBits - dataBits.length);
-  appendBits(dataBits, 0, terminator);
-
-  while (dataBits.length % 8 !== 0) {
-    dataBits.push(0);
-  }
-
-  const dataCodewords: number[] = [];
-  for (let i = 0; i < dataBits.length; i += 8) {
-    let codeword = 0;
-    for (let j = 0; j < 8; j += 1) {
-      codeword = (codeword << 1) | dataBits[i + j];
-    }
-    dataCodewords.push(codeword);
-  }
-
-  let padByte = 0xec;
-  while (dataCodewords.length < QR_DATA_CODEWORDS) {
-    dataCodewords.push(padByte);
-    padByte = padByte === 0xec ? 0x11 : 0xec;
-  }
-
-  if (dataCodewords.length > QR_DATA_CODEWORDS) {
-    throw new Error("QR payload is too long for the local encoder.");
-  }
-
-  const divisor = reedSolomonDivisor(QR_ECC_CODEWORDS_PER_BLOCK);
-  const shortBlockLength = Math.floor(QR_DATA_CODEWORDS / QR_BLOCKS);
-  const longBlockCount = QR_DATA_CODEWORDS % QR_BLOCKS;
-  const blocks: Array<{ data: number[]; ecc: number[] }> = [];
-  let offset = 0;
-
-  for (let blockIndex = 0; blockIndex < QR_BLOCKS; blockIndex += 1) {
-    const isLongBlock = blockIndex >= QR_BLOCKS - longBlockCount;
-    const dataLength = shortBlockLength + (isLongBlock ? 1 : 0);
-    const data = dataCodewords.slice(offset, offset + dataLength);
-    offset += dataLength;
-    blocks.push({ data, ecc: reedSolomonRemainder(data, divisor) });
-  }
-
-  const result: number[] = [];
-  const longestDataBlock = Math.max(...blocks.map((block) => block.data.length));
-
-  for (let i = 0; i < longestDataBlock; i += 1) {
-    blocks.forEach((block) => {
-      if (i < block.data.length) {
-        result.push(block.data[i]);
-      }
-    });
-  }
-
-  for (let i = 0; i < QR_ECC_CODEWORDS_PER_BLOCK; i += 1) {
-    blocks.forEach((block) => result.push(block.ecc[i]));
-  }
-
-  return result;
-}
-
-function appendBits(bits: number[], value: number, length: number) {
-  for (let i = length - 1; i >= 0; i -= 1) {
-    bits.push((value >>> i) & 1);
-  }
-}
-
-function createBaseMatrix(mask: number) {
-  const matrix = Array.from({ length: QR_SIZE }, () => Array(QR_SIZE).fill(false));
-  const isFunction = Array.from({ length: QR_SIZE }, () => Array(QR_SIZE).fill(false));
-
-  const setFunction = (row: number, col: number, dark: boolean) => {
-    if (row >= 0 && row < QR_SIZE && col >= 0 && col < QR_SIZE) {
-      matrix[row][col] = dark;
-      isFunction[row][col] = true;
-    }
-  };
-
-  drawFinder(setFunction, 3, 3);
-  drawFinder(setFunction, 3, QR_SIZE - 4);
-  drawFinder(setFunction, QR_SIZE - 4, 3);
-
-  QR_ALIGNMENT_POSITIONS.forEach((row) => {
-    QR_ALIGNMENT_POSITIONS.forEach((col) => {
-      const overlapsFinder =
-        (row === 6 && col === 6) ||
-        (row === 6 && col === QR_SIZE - 7) ||
-        (row === QR_SIZE - 7 && col === 6);
-      if (!overlapsFinder) {
-        drawAlignment(setFunction, row, col);
-      }
-    });
-  });
-
-  for (let i = 0; i < QR_SIZE; i += 1) {
-    if (!isFunction[6][i]) {
-      setFunction(6, i, i % 2 === 0);
-    }
-    if (!isFunction[i][6]) {
-      setFunction(i, 6, i % 2 === 0);
-    }
-  }
-
-  drawFormatBits(setFunction, mask);
-  drawVersionBits(setFunction);
-
-  return { matrix, isFunction };
-}
-
-function drawFinder(
-  setFunction: (row: number, col: number, dark: boolean) => void,
-  centerRow: number,
-  centerCol: number,
-) {
-  for (let row = -4; row <= 4; row += 1) {
-    for (let col = -4; col <= 4; col += 1) {
-      const distance = Math.max(Math.abs(row), Math.abs(col));
-      const dark = distance !== 2 && distance !== 4;
-      setFunction(centerRow + row, centerCol + col, dark);
-    }
-  }
-}
-
-function drawAlignment(
-  setFunction: (row: number, col: number, dark: boolean) => void,
-  centerRow: number,
-  centerCol: number,
-) {
-  for (let row = -2; row <= 2; row += 1) {
-    for (let col = -2; col <= 2; col += 1) {
-      const distance = Math.max(Math.abs(row), Math.abs(col));
-      setFunction(centerRow + row, centerCol + col, distance === 0 || distance === 2);
-    }
-  }
-}
-
-function drawFormatBits(
-  setFunction: (row: number, col: number, dark: boolean) => void,
-  mask: number,
-) {
-  const data = (0b01 << 3) | mask;
-  let remainder = data;
-  for (let i = 0; i < 10; i += 1) {
-    remainder = (remainder << 1) ^ (((remainder >>> 9) & 1) * 0x537);
-  }
-  const bits = ((data << 10) | remainder) ^ 0x5412;
-
-  for (let i = 0; i <= 5; i += 1) {
-    setFunction(8, i, getBit(bits, i));
-  }
-  setFunction(8, 7, getBit(bits, 6));
-  setFunction(8, 8, getBit(bits, 7));
-  setFunction(7, 8, getBit(bits, 8));
-  for (let i = 9; i < 15; i += 1) {
-    setFunction(14 - i, 8, getBit(bits, i));
-  }
-
-  for (let i = 0; i < 8; i += 1) {
-    setFunction(QR_SIZE - 1 - i, 8, getBit(bits, i));
-  }
-  for (let i = 8; i < 15; i += 1) {
-    setFunction(8, QR_SIZE - 15 + i, getBit(bits, i));
-  }
-  setFunction(QR_SIZE - 8, 8, true);
-}
-
-function drawVersionBits(setFunction: (row: number, col: number, dark: boolean) => void) {
-  let remainder = QR_VERSION;
-  for (let i = 0; i < 12; i += 1) {
-    remainder = (remainder << 1) ^ (((remainder >>> 11) & 1) * 0x1f25);
-  }
-  const bits = (QR_VERSION << 12) | remainder;
-
-  for (let i = 0; i < 18; i += 1) {
-    const bit = getBit(bits, i);
-    const a = QR_SIZE - 11 + (i % 3);
-    const b = Math.floor(i / 3);
-    setFunction(b, a, bit);
-    setFunction(a, b, bit);
-  }
-}
-
-function drawData(
-  matrix: boolean[][],
-  isFunction: boolean[][],
-  bits: boolean[],
-  mask: number,
-) {
-  let bitIndex = 0;
-  let upward = true;
-
-  for (let col = QR_SIZE - 1; col >= 1; col -= 2) {
-    if (col === 6) {
-      col -= 1;
-    }
-
-    for (let i = 0; i < QR_SIZE; i += 1) {
-      const row = upward ? QR_SIZE - 1 - i : i;
-
-      for (let offset = 0; offset < 2; offset += 1) {
-        const currentCol = col - offset;
-        if (!isFunction[row][currentCol]) {
-          const bit = bitIndex < bits.length ? bits[bitIndex] : false;
-          matrix[row][currentCol] = bit !== maskApplies(mask, row, currentCol);
-          bitIndex += 1;
-        }
-      }
-    }
-
-    upward = !upward;
-  }
-}
-
-function maskApplies(mask: number, row: number, col: number) {
-  switch (mask) {
-    case 0:
-      return (row + col) % 2 === 0;
-    case 1:
-      return row % 2 === 0;
-    case 2:
-      return col % 3 === 0;
-    case 3:
-      return (row + col) % 3 === 0;
-    case 4:
-      return (Math.floor(row / 2) + Math.floor(col / 3)) % 2 === 0;
-    case 5:
-      return ((row * col) % 2) + ((row * col) % 3) === 0;
-    case 6:
-      return (((row * col) % 2) + ((row * col) % 3)) % 2 === 0;
-    default:
-      return (((row + col) % 2) + ((row * col) % 3)) % 2 === 0;
-  }
-}
-
-function calculatePenalty(matrix: boolean[][]) {
-  let penalty = 0;
-
-  for (let row = 0; row < QR_SIZE; row += 1) {
-    penalty += runPenalty(matrix[row]);
-  }
-
-  for (let col = 0; col < QR_SIZE; col += 1) {
-    penalty += runPenalty(matrix.map((row) => row[col]));
-  }
-
-  for (let row = 0; row < QR_SIZE - 1; row += 1) {
-    for (let col = 0; col < QR_SIZE - 1; col += 1) {
-      const color = matrix[row][col];
-      if (
-        color === matrix[row][col + 1] &&
-        color === matrix[row + 1][col] &&
-        color === matrix[row + 1][col + 1]
-      ) {
-        penalty += 3;
-      }
-    }
-  }
-
-  const finderPattern = [true, false, true, true, true, false, true, false, false, false, false];
-  const reverseFinderPattern = [...finderPattern].reverse();
-
-  for (let row = 0; row < QR_SIZE; row += 1) {
-    penalty += finderPenalty(matrix[row], finderPattern, reverseFinderPattern);
-  }
-
-  for (let col = 0; col < QR_SIZE; col += 1) {
-    penalty += finderPenalty(matrix.map((row) => row[col]), finderPattern, reverseFinderPattern);
-  }
-
-  const dark = matrix.flat().filter(Boolean).length;
-  const total = QR_SIZE * QR_SIZE;
-  penalty += Math.floor(Math.abs(dark * 20 - total * 10) / total) * 10;
-
-  return penalty;
-}
-
-function runPenalty(line: boolean[]) {
-  let penalty = 0;
-  let runColor = line[0];
-  let runLength = 1;
-
-  for (let i = 1; i < line.length; i += 1) {
-    if (line[i] === runColor) {
-      runLength += 1;
-      if (runLength === 5) {
-        penalty += 3;
-      } else if (runLength > 5) {
-        penalty += 1;
-      }
-    } else {
-      runColor = line[i];
-      runLength = 1;
-    }
-  }
-
-  return penalty;
-}
-
-function finderPenalty(line: boolean[], pattern: boolean[], reversePattern: boolean[]) {
-  let penalty = 0;
-
-  for (let i = 0; i <= line.length - pattern.length; i += 1) {
-    const slice = line.slice(i, i + pattern.length);
-    const matches =
-      pattern.every((value, index) => value === slice[index]) ||
-      reversePattern.every((value, index) => value === slice[index]);
-    if (matches) {
-      penalty += 40;
-    }
-  }
-
-  return penalty;
-}
-
-const EXP_TABLE = new Array<number>(512);
-const LOG_TABLE = new Array<number>(256);
-
-let fieldValue = 1;
-for (let i = 0; i < 255; i += 1) {
-  EXP_TABLE[i] = fieldValue;
-  LOG_TABLE[fieldValue] = i;
-  fieldValue <<= 1;
-  if (fieldValue & 0x100) {
-    fieldValue ^= 0x11d;
-  }
-}
-for (let i = 255; i < 512; i += 1) {
-  EXP_TABLE[i] = EXP_TABLE[i - 255];
-}
-
-function gfMultiply(a: number, b: number) {
-  if (a === 0 || b === 0) {
-    return 0;
-  }
-  return EXP_TABLE[LOG_TABLE[a] + LOG_TABLE[b]];
-}
-
-function reedSolomonDivisor(degree: number) {
-  const result = Array(degree).fill(0);
-  result[degree - 1] = 1;
-  let root = 1;
-
-  for (let i = 0; i < degree; i += 1) {
-    for (let j = 0; j < degree; j += 1) {
-      result[j] = gfMultiply(result[j], root);
-      if (j + 1 < degree) {
-        result[j] ^= result[j + 1];
-      }
-    }
-    root = gfMultiply(root, 0x02);
-  }
-
-  return result;
-}
-
-function reedSolomonRemainder(data: number[], divisor: number[]) {
-  const result = Array(divisor.length).fill(0);
-
-  data.forEach((byte) => {
-    const factor = byte ^ (result.shift() ?? 0);
-    result.push(0);
-    divisor.forEach((coefficient, index) => {
-      result[index] ^= gfMultiply(coefficient, factor);
-    });
-  });
-
-  return result;
-}
-
-function getBit(value: number, index: number) {
-  return ((value >>> index) & 1) !== 0;
 }
